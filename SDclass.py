@@ -35,9 +35,11 @@ class SDCompare:
     self.cache_model = cache_model
     self.scheduler_dict = scheduler_dict
     
+    print('\nloading model...\n')
     self.init_pipe()
     self.init_scheduler()
     self.init_cacher()
+    print('\nloading coco annotations...\n')
     self.init_COCO_annotations()
     self.init_CLIP_model()
     
@@ -171,7 +173,7 @@ class SDCompare:
     '''
 
     if path_gen==None: 
-      path_gen = f'imgs_SD/cache_{self.cache_model}/{self.scheduler["name"]}/{self.inference_steps}'
+      path_gen = f'imgs_SD/cache_{self.cache_model}/{self.scheduler_dict["name"]}/{self.inference_steps}'
 
     os.mkdir(path_coco, exist_ok=True)
     os.mkdir(path_gen,  exist_ok=True)
