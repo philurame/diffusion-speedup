@@ -102,8 +102,9 @@ class SDCompare:
           zip_ref.extractall('.')
       os.remove(annotations_path)
     
-    coco = COCO('annotations/instances_train2017.json')
-    img_ids = coco.getImgIds()
+    self.coco_imgs = COCO('annotations/instances_train2017.json')
+    self.coco_prompts = COCO('annotations/captions_train2017.json')
+    img_ids =self.coco_imgs.getImgIds()
 
     random.seed(42)
     random.shuffle(img_ids)
@@ -113,7 +114,7 @@ class SDCompare:
   # =============================================================================
   # Utilities
   # =============================================================================
-  def __cal__(self, prompt, **kwargs):
+  def __call__(self, prompt, **kwargs):
     '''
     Returns generated image by prompt based on which cache model is used
     '''
@@ -181,8 +182,7 @@ class SDCompare:
     stats = {}
 
     coco_already_exist = os.listdir(path_coco)
-    coco_imgs = COCO('annotations/instances_train2017.json')
-    coco_prompts = COCO('annotations/captions_train2017.json')
+    
 
     clip_scores = torch.zeros((len(self.img_ids[val_test]), 2), dtype=torch.float32)
 
@@ -192,15 +192,15 @@ class SDCompare:
       torch.manual_seed(n)
       random.seed(n)
 
-      ann_ids = coco_prompts.getAnnIds(imgIds=img_id)
-      prompts = coco_prompts.loadAnns(ann_ids)
+      ann_ids = self.coco_prompts.getAnnIds(imgIds=img_id)
+      prompts = self.coco_prompts.loadAnns(ann_ids)
       
       prompt = random.choice([ann['caption'] for ann in prompts])
 
       img_gen_cond = self(prompt)
 
       if img_id not in coco_already_exist:
-        img_url = coco_imgs.loadImgs(img_id)[0]['coco_url']
+        img_url = self.coco_imgs.loadImgs(img_id)[0]['coco_url']
         img_coco = Image.open(BytesIO(requests.get(img_url).content))
         img_coco.save(f"{path_coco}/{img_id}.png")
       else:
