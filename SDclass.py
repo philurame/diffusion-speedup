@@ -8,8 +8,7 @@ from pycocotools.coco import COCO
 from pytorch_fid import fid_score
 from diffusers import StableDiffusionPipeline
 from diffusers import StableDiffusionXLPipeline
-from diffusers import DPMSolverMultistepScheduler
-from DeepCache import DeepCacheSDHelpe
+from DeepCache import DeepCacheSDHelper
 from tgate import TgateSDLoader
 from torch.profiler import profile, record_function, ProfilerActivity
 
