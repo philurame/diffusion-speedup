@@ -56,6 +56,7 @@ class SDCompare:
     elif self.model == "SDXL":
       pipe = StableDiffusionXLPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", torch_dtype=torch.float16)
     self.pipe = pipe.to("cuda")
+    self.pipe.set_progress_bar_config(disable=True)
 
   def init_scheduler(self, scheduler_dict=None):
     '''
