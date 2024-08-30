@@ -214,6 +214,7 @@ class SDCompare:
     # CLIP stats
     stats['CLIP_mean'] = clip_scores[:,0].mean()
     stats['CLIP_diff'] = (clip_scores[:,0]-clip_scores[:,1]).abs().mean()
+    print(f"CLIP mean: {stats['CLIP_mean']:.3f}, diff: {stats['CLIP_diff']:.3f}")
 
     path_coco_FID = os.path.join(path_coco, 'FID')
     path_gen_FID  = os.path.join(path_gen,  'FID')
@@ -228,7 +229,8 @@ class SDCompare:
     for n, img_id in enumerate(tqdm(self.img_ids[val_test], desc="FID")):
       torch.manual_seed(n)
 
-      img_gen_uncond = self("", height=299, width=299)
+      img_gen_uncond = self("")
+      img_gen_uncond = img_gen_uncond.resize((299, 299), Image.ANTIALIAS)
       img_gen_uncond.save(f"{path_gen_FID}/{img_id}.png")
 
       if img_id not in coco_already_exist:
@@ -241,5 +243,6 @@ class SDCompare:
     # FID stat
     fid_value = fid_score.calculate_fid_given_paths([path_coco, path_gen], batch_size=50, device='cuda', dims=2048)
     stats['FID'] = fid_value
+    print(f"FID: {stats['FID']:.3f}")
 
     return stats
