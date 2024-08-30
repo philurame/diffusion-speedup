@@ -25,14 +25,15 @@ class SDCompare:
   # =============================================================================
   # Initialization
   # =============================================================================
-  def __init__(self, scheduler, scheduler_name, cache_model="deepcache", model='SD'):
+  def __init__(self, scheduler_dict, cache_model="deepcache", model='SD'):
     '''
     Initializes Stable Diffusion pipeline with scheduler and cache model
-    (scheduler_name and cache_model are also used for naming generated images folder)
+    scheduler_dict is a dictionary with keys 'scheduler', 'params' and 'name'
+    (scheduler_name, cache_model and model are also used for naming generated images folder)
     '''
     self.model = model
     self.cache_model = cache_model
-    self.scheduler = {'scheduler': scheduler, 'name': scheduler_name}
+    self.scheduler_dict = scheduler_dict
     
     self.init_pipe()
     self.init_scheduler()
@@ -54,13 +55,13 @@ class SDCompare:
       pipe = StableDiffusionXLPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", torch_dtype=torch.float16)
     self.pipe = pipe.to("cuda")
 
-  def init_scheduler(self, scheduler=None):
+  def init_scheduler(self, scheduler_dict=None):
     '''
     Initializes scheduler
     '''
-    if scheduler==None: scheduler = self.scheduler
-    self.scheduler = scheduler
-    self.pipe.scheduler = scheduler
+    if scheduler_dict==None: scheduler_dict = self.scheduler_dict
+    self.scheduler_dict = scheduler_dict
+    self.pipe.scheduler = scheduler_dict['scheduler'].from_config(self.pipe.scheduler.config, **scheduler_dict.get('params', {}))
 
   def init_CLIP_model(self):
     '''
@@ -176,7 +177,6 @@ class SDCompare:
     os.mkdir(path_gen,  exist_ok=True)
 
     stats = {}
-    assert(torch.cuda.is_available(), "cuda is not available")
 
     coco_already_exist = os.listdir(path_coco)
     coco_imgs = COCO('annotations/instances_train2017.json')
