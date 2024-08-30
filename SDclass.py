@@ -175,8 +175,8 @@ class SDCompare:
     if path_gen==None: 
       path_gen = f'imgs_SD/cache_{self.cache_model}/{self.scheduler_dict["name"]}/{self.inference_steps}'
 
-    os.mkdir(path_coco, exist_ok=True)
-    os.mkdir(path_gen,  exist_ok=True)
+    os.makedirs(path_coco, exist_ok=True)
+    os.makedirs(path_gen,  exist_ok=True)
 
     stats = {}
 
@@ -216,8 +216,8 @@ class SDCompare:
 
     path_coco_FID = os.path.join(path_coco, 'FID')
     path_gen_FID  = os.path.join(path_gen,  'FID')
-    os.mkdir(path_coco_FID, exist_ok=True)
-    os.mkdir(path_gen_FID,  exist_ok=True)
+    os.makedirs(path_coco_FID, exist_ok=True)
+    os.makedirs(path_gen_FID,  exist_ok=True)
     coco_already_exist = os.listdir(path_coco_FID)
 
     gc.collect()
