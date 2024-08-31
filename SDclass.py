@@ -248,7 +248,7 @@ class SDCompare:
     # CLIP stats
     clip_mean = clip_scores[:,0].mean()
     clip_diff = (clip_scores[:,0]-clip_scores[:,1]).abs().mean()
-    return clip_mean, clip_diff
+    return float(clip_mean), float(clip_diff)
 
 
   # =============================================================================
