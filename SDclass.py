@@ -9,7 +9,7 @@ from pytorch_fid import fid_score
 from diffusers import StableDiffusionPipeline
 from diffusers import StableDiffusionXLPipeline
 from DeepCache import DeepCacheSDHelper
-from tgate import TgateSDLoader
+from tgate import TgateSDLoader, TgateSDXLLoader
 from torch.profiler import profile, record_function, ProfilerActivity
 
 class SDCompare:
@@ -25,7 +25,7 @@ class SDCompare:
   # =============================================================================
   # Initialization
   # =============================================================================
-  def __init__(self, scheduler_dict, cache_model="deepcache", model='SD'):
+  def __init__(self, scheduler_dict, cache_model="both", model='SD'):
     '''
     Initializes Stable Diffusion pipeline with scheduler and cache model
     scheduler_dict is a dictionary with keys 'scheduler', 'params' and 'name'
@@ -79,7 +79,10 @@ class SDCompare:
     Possible values: "tgate", "deepcache", "both"
     '''
     if self.cache_model in ["tgate", "both"]:
-      self.pipe = TgateSDLoader(self.pipe).to("cuda")
+      if self.model == "SD":
+        self.pipe = TgateSDLoader(self.pipe).to("cuda")
+      elif self.model == "SDXL":
+        self.pipe = TgateSDXLLoader(self.pipe).to("cuda")
     if self.cache_model in ["deepcache", "both"]:
       helper = DeepCacheSDHelper(pipe=self.pipe)
       helper.set_params(
