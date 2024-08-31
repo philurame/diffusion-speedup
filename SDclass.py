@@ -271,11 +271,10 @@ class SDCompare:
     already_generated = os.listdir(self.path_gen_FID)
     for n, img_id in enumerate(tqdm(self.img_ids[val_test], desc="FID")):
       if f"{img_id}.png" in already_generated:
-        img_gen_uncond = Image.open(f"{self.path_gen_FID}/{img_id}.png")
-      else:
-        torch.manual_seed(n)
-        img_gen_uncond = self("")
-        img_gen_uncond = img_gen_uncond.resize((299, 299), Image.LANCZOS)
+        continue
+      torch.manual_seed(n)
+      img_gen_uncond = self("")
+      img_gen_uncond = img_gen_uncond.resize((299, 299), Image.LANCZOS)
       img_gen_uncond.save(f"{self.path_gen_FID}/{img_id}.png")
     
     # FID stat
