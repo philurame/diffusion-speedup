@@ -33,6 +33,7 @@ class SDCompare:
     '''
     self.model = model
     self.cache_model = cache_model
+    self.DeepCacheHelper = None
     self.scheduler_dict = scheduler_dict
     self.clip_model = clip_model
 
@@ -98,13 +99,16 @@ class SDCompare:
       else:
         raise ValueError(f"Unknown model {self.model}")
     if self.cache_model in ["deepcache", "both"]:
-      helper = DeepCacheSDHelper(pipe=self.pipe)
-      helper.set_params(
+      self.DeepCacheHelper = DeepCacheSDHelper(pipe=self.pipe)
+      self.DeepCacheHelper.set_params(
           cache_interval=3,
           cache_branch_id=0,
       )
-      helper.enable()
-    elif self.cache_model != 'tgate':
+      self.DeepCacheHelper.enable()
+    elif self.cache_model == 'tgate':
+      if self.DeepCacheHelper!=None:
+        self.DeepCacheHelper.disable()
+    else:
       raise ValueError(f"Unknown cache model {self.cache_model}")
   
   def init_COCO_data(self, N_val=512, N_test=1024, path_coco_imgs=None, path_coco_FID=None):
@@ -112,10 +116,10 @@ class SDCompare:
     Downloads and extracts MSCOCO dataset with annotations and images
     Sets validation and test image ids
     '''
-    path_coco_imgs = path_coco_imgs or os.path.join(self.data_path, 'imgs_coco')
-    path_coco_FID = path_coco_FID or os.path.join(self.data_path, 'imgs_coco_FID')
-    os.makedirs(path_coco_imgs, exist_ok=True)
-    os.makedirs(path_coco_FID, exist_ok=True)
+    self.path_coco_imgs = path_coco_imgs or os.path.join(self.data_path, 'imgs_coco')
+    self.path_coco_FID = path_coco_FID or os.path.join(self.data_path, 'imgs_coco_FID')
+    os.makedirs(self.path_coco_imgs, exist_ok=True)
+    os.makedirs(self.path_coco_FID, exist_ok=True)
 
     if not os.path.exists(os.path.join(self.data_path, 'annotations')):
       annotations_url = 'http://images.cocodataset.org/annotations/annotations_trainval2017.zip'
@@ -138,8 +142,7 @@ class SDCompare:
 
     # download images
     print('downloading images...')
-    self.path_coco_imgs = path_coco_imgs
-    already_downloaded = os.listdir(path_coco_imgs)
+    already_downloaded = os.listdir(self.path_coco_imgs)
     images = self.coco_imgs.loadImgs(self.img_ids['val'] + self.img_ids['test'])
     for img in tqdm(images):
       if f"{img['id']}.png" in already_downloaded:
@@ -147,17 +150,17 @@ class SDCompare:
       img_url = img['coco_url']
       img_data = requests.get(img_url).content
       
-      with open(f"{path_coco_imgs}/{img['id']}.png", 'wb') as handler:
+      with open(f"{self.path_coco_imgs}/{img['id']}.png", 'wb') as handler:
         handler.write(img_data)
     
     # copy and resize images to 299x299
-    already_downloaded = os.listdir(path_coco_FID)
+    already_downloaded = os.listdir(self.path_coco_FID)
     for img_id in tqdm(self.img_ids['val'] + self.img_ids['test']):
       if f"{img_id}.png" in already_downloaded:
         continue
-      img_coco = Image.open(f"{path_coco_imgs}/{img_id}.png")
+      img_coco = Image.open(f"{self.path_coco_imgs}/{img_id}.png")
       img_coco = img_coco.resize((299, 299), Image.LANCZOS)
-      img_coco.save(f"{path_coco_FID}/{img_id}.png")
+      img_coco.save(f"{self.path_coco_FID}/{img_id}.png")
 
   
   # =============================================================================
@@ -179,20 +182,8 @@ class SDCompare:
     call_params['gate_step'] = max(call_params['num_inference_steps']//2.5, 1)
     call_params.update(kwargs)
     return self.pipe.tgate(**call_params).images[0]
-  
-  def get_tflops(self, prompt, print_table=False, **kwargs):
-    '''
-    Returns GFLOPS depending on the cache_model, scheduler, inference_steps
-    '''
-    with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True, with_flops=True) as prof:
-      with record_function("model_inference"):
-        self(prompt, **kwargs)
 
-    if print_table:
-      print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
-    return round(prof.key_averages().flops/1e12,3)
-
-  def get_clip_score(self, image, caption):
+  def _get_clip_score(self, image, caption):
     '''
     Returns CLIP score for one image and one caption
     see https://github.com/Taited/clip-score/blob/master/src/clip_score/clip_score.py
@@ -209,29 +200,31 @@ class SDCompare:
     clip_score = torch.matmul(image_features, text_features.T).item()
     return clip_score
   
+  # =============================================================================
+  # Tflops
+  # =============================================================================
+  def Tflops(self, prompt, print_table=False, **kwargs):
+    '''
+    Returns GFLOPS depending on the cache_model, scheduler, inference_steps
+    '''
+    with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True, with_flops=True) as prof:
+      with record_function("model_inference"):
+        self(prompt, **kwargs)
+
+    if print_table:
+      print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
+    return round(prof.key_averages().flops/1e12,3)
+  
 
   # =============================================================================
-  # CLIP and FID
+  # CLIP
   # =============================================================================
-  def get_stats(self, path_gen=None, val_test='test', delete_gen_after=True):
+  def CLIP(self, val_test='val'):
     '''
     Generates conditional images and calculates CLIP on MSCOCO dataset
-    Generates unconditional small images and calculates FID on resized MSCOCO dataset
-    Returns stats dictionary for CLIP and FID
     '''
-
-    if path_gen==None: 
-      path_gen = f'imgs_{self.model}/cache_{self.cache_model}/{self.scheduler_dict["name"]}/{self.inference_steps}'
-      path_gen = os.path.join(self.data_path, path_gen)
-    self.path_gen = path_gen
-    self.path_gen_FID  = os.path.join(path_gen,  'FID')
-    os.makedirs(path_gen, exist_ok=True)
-    os.makedirs(self.path_gen_FID,  exist_ok=True)
-
-    stats = {}
     clip_scores = torch.zeros((len(self.img_ids[val_test]), 2), dtype=torch.float32)
-
-    # CLIP loop:
+    # gen loop:
     for n, img_id in enumerate(tqdm(self.img_ids[val_test], desc="CLIP")):
       torch.manual_seed(n)
       random.seed(n)
@@ -243,19 +236,33 @@ class SDCompare:
       img_gen_cond = self(prompt)
       img_coco = Image.open(f"{self.path_coco_imgs}/{img_id}.png")
 
-      clip_gen  = float(self.get_clip_score(img_gen_cond, prompt))
-      clip_real = float(self.get_clip_score(img_coco, prompt))
+      clip_gen  = float(self._get_clip_score(img_gen_cond, prompt))
+      clip_real = float(self._get_clip_score(img_coco, prompt))
       clip_scores[n] = torch.tensor([clip_gen, clip_real])
 
     # CLIP stats
-    stats['CLIP_mean'] = clip_scores[:,0].mean()
-    stats['CLIP_diff'] = (clip_scores[:,0]-clip_scores[:,1]).abs().mean()
-    print(f"CLIP mean: {stats['CLIP_mean']:.3f}, diff: {stats['CLIP_diff']:.3f}")
+    clip_mean = clip_scores[:,0].mean()
+    clip_diff = (clip_scores[:,0]-clip_scores[:,1]).abs().mean()
+    return clip_mean, clip_diff
 
 
-    gc.collect()
-    torch.cuda.empty_cache()
-    # FID loop:
+  # =============================================================================
+  # FID
+  # =============================================================================
+  def FID(self, val_test='val', path_gen=None, delete_gen_after=True):
+    '''
+    Generates unconditional small images and calculates FID on resized MSCOCO dataset
+    if delete_gen_after is True, generated images will be deleted after FID calculation
+    '''
+    if path_gen==None: 
+      path_gen = f'imgs_{self.model}/cache_{self.cache_model}/{self.scheduler_dict["name"]}/{self.inference_steps}'
+      path_gen = os.path.join(self.data_path, path_gen)
+    self.path_gen = path_gen
+    self.path_gen_FID  = os.path.join(path_gen,  'FID')
+    os.makedirs(path_gen, exist_ok=True)
+    os.makedirs(self.path_gen_FID,  exist_ok=True)
+
+    # gen & resize loop:
     for n, img_id in enumerate(tqdm(self.img_ids[val_test], desc="FID")):
       torch.manual_seed(n)
       img_gen_uncond = self("")
@@ -264,10 +271,8 @@ class SDCompare:
     
     # FID stat
     fid_value = fid_score.calculate_fid_given_paths([self.path_coco_FID, path_gen], batch_size=50, device='cuda', dims=2048)
-    stats['FID'] = fid_value
-    print(f"FID: {stats['FID']:.3f}")
 
     if delete_gen_after:
       shutil.rmtree(self.path_gen_FID)
 
-    return stats
+    return fid_value
