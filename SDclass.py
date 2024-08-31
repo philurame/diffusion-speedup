@@ -25,9 +25,10 @@ class SDCompare:
   # =============================================================================
   # Initialization
   # =============================================================================
-  def __init__(self, scheduler_dict, cache_model="both", model='SD', clip_model='ViT-B/32', data_path='img_data'):
+  def __init__(self, scheduler_dict, cache_model="deepcache", model='SD', clip_model='ViT-B/32', data_path='img_data'):
     '''
     Initializes Stable Diffusion pipeline with scheduler and cache model
+    cache_model is a string with possible values: "tgate", "deepcache", "both" or None
     scheduler_dict is a dictionary with keys 'scheduler', 'params' and 'name'
     (scheduler_name, cache_model and model are also used for naming generated images folder)
     '''
@@ -108,7 +109,7 @@ class SDCompare:
     elif self.cache_model == 'tgate':
       if self.DeepCacheHelper!=None:
         self.DeepCacheHelper.disable()
-    else:
+    elif self.cache_model is not None:
       raise ValueError(f"Unknown cache model {self.cache_model}")
   
   def init_COCO_data(self, N_val=512, N_test=1024, path_coco_imgs=None, path_coco_FID=None):
