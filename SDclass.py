@@ -207,13 +207,16 @@ class SDCompare:
     '''
     Returns GFLOPS depending on the cache_model, scheduler, inference_steps
     '''
+    torch.manual_seed(kwargs.get("seed", 42))
     with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True, with_flops=True) as prof:
       with record_function("model_inference"):
         self(prompt, **kwargs)
 
     if print_table:
       print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
-    return round(prof.key_averages().flops/1e12,3)
+    
+    total_flops = sum([event.flops for event in prof.key_averages() if event.flops is not None])
+    return round(total_flops/1e12,3)
   
 
   # =============================================================================
