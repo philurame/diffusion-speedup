@@ -254,7 +254,7 @@ class SDCompare:
   # =============================================================================
   # FID
   # =============================================================================
-  def FID(self, val_test='val', path_gen=None, delete_gen_after=True):
+  def FID(self, val_test='val', path_gen=None, delete_gen_after=True, **fid_kwargs):
     '''
     Generates unconditional small images and calculates FID on resized MSCOCO dataset
     if delete_gen_after is True, generated images will be deleted after FID calculation
@@ -278,7 +278,9 @@ class SDCompare:
       img_gen_uncond.save(f"{self.path_gen_FID}/{img_id}.png")
     
     # FID stat
-    fid_value = fid_score.calculate_fid_given_paths([self.path_coco_FID, path_gen], batch_size=50, device=self.device, dims=2048)
+    fid_params = {'batch_size': 20, 'device': self.device, 'dims': 2048}
+    fid_params.update(fid_kwargs)
+    fid_value = fid_score.calculate_fid_given_paths([self.path_coco_FID, path_gen], **fid_params)
 
     if delete_gen_after:
       shutil.rmtree(self.path_gen_FID)
