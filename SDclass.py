@@ -106,12 +106,12 @@ class SDCompare:
     Downloads and extracts MSCOCO dataset with annotations and images
     Sets validation and test image ids
     '''
-    path_coco_imgs = path_coco_imgs or os.join(self.data_path, 'imgs_coco')
-    path_coco_FID = path_coco_FID or os.join(self.data_path, 'imgs_coco_FID')
+    path_coco_imgs = path_coco_imgs or os.path.join(self.data_path, 'imgs_coco')
+    path_coco_FID = path_coco_FID or os.path.join(self.data_path, 'imgs_coco_FID')
     os.makedirs(path_coco_imgs, exist_ok=True)
     os.makedirs(path_coco_FID, exist_ok=True)
 
-    if not os.path.exists(os.join(self.data_path, 'annotations')):
+    if not os.path.exists(os.path.join(self.data_path, 'annotations')):
       annotations_url = 'http://images.cocodataset.org/annotations/annotations_trainval2017.zip'
       annotations_path = 'annotations_trainval2017.zip'
       response = requests.get(annotations_url)
@@ -122,8 +122,8 @@ class SDCompare:
       os.remove(annotations_path)
     
     
-    self.coco_imgs = COCO(os.join(self.data_path, 'annotations/instances_train2017.json'))
-    self.coco_prompts = COCO(os.join(self.data_path, 'annotations/captions_train2017.json'))
+    self.coco_imgs = COCO(os.path.join(self.data_path, 'annotations/instances_train2017.json'))
+    self.coco_prompts = COCO(os.path.join(self.data_path, 'annotations/captions_train2017.json'))
     img_ids = self.coco_imgs.getImgIds()
 
     random.seed(42)
