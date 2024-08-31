@@ -44,8 +44,6 @@ class SDCompare:
     self.init_CLIP_model()
     
     self.inference_steps = 15
-    self.gen_height = 512
-    self.gen_width  = 512
   
   def init_pipe(self):
     '''
@@ -125,8 +123,6 @@ class SDCompare:
     call_params = dict(
         prompt = prompt,
         num_inference_steps = self.inference_steps,
-        height = self.gen_height,
-        width  = self.gen_width,
     )
 
     if self.cache_model == "deepcache":
