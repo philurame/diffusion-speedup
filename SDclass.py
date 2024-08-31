@@ -291,8 +291,8 @@ class SDCompare:
   # Combined stats
   # =============================================================================
   def stats(self, num_inference_steps=None, get_fid=False):
-    steps = steps or self.num_inference_steps
-    self.num_inference_steps = steps
+    num_inference_steps = num_inference_steps or self.num_inference_steps
+    self.num_inference_steps = num_inference_steps
 
     Tflops_cond = self.Tflops(prompt="a photograph of an astronaut riding a horse")
     Tflops_uncond = self.Tflops(prompt="")
