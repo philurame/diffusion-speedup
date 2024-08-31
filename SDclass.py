@@ -129,7 +129,7 @@ class SDCompare:
       call_params.update(kwargs)
       return self.pipe(**call_params).images[0]
 
-    call_params['gate_step'] = max(self.inference_steps//2.5, 1)
+    call_params['gate_step'] = max(call_params['num_inference_steps']//2.5, 1)
     call_params.update(kwargs)
     return self.pipe.tgate(**call_params).images[0]
   
