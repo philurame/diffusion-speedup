@@ -25,7 +25,7 @@ class SDCompare:
   # =============================================================================
   # Initialization
   # =============================================================================
-  def __init__(self, scheduler_dict, cache_model="both", model='SD', clip_model='ViT-B/32', data_path='data'):
+  def __init__(self, scheduler_dict, cache_model="both", model='SD', clip_model='ViT-B/32', data_path='img_data'):
     '''
     Initializes Stable Diffusion pipeline with scheduler and cache model
     scheduler_dict is a dictionary with keys 'scheduler', 'params' and 'name'
