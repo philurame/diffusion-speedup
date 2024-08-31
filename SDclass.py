@@ -101,7 +101,7 @@ class SDCompare:
       )
       helper.enable()
   
-  def init_COCO_data(self, N_val=512, N_test=1024, path_coco_imgs='imgs_coco', path_coco_FID='imgs_coco_FID'):
+  def init_COCO_data(self, N_val=512, N_test=1024, path_coco_imgs=None, path_coco_FID=None):
     '''
     Downloads and extracts MSCOCO dataset with annotations and images
     Sets validation and test image ids
@@ -147,6 +147,8 @@ class SDCompare:
     # copy and resize images to 299x299
     already_downloaded = os.listdir(path_coco_FID)
     for img_id in tqdm(self.img_ids['val'] + self.img_ids['test']):
+      if f"{img_id}.png" in already_downloaded:
+        continue
       img_coco = Image.open(f"{path_coco_imgs}/{img_id}.png")
       img_coco = img_coco.resize((299, 299), Image.ANTIALIAS)
       img_coco.save(f"{path_coco_FID}/{img_id}.png")
@@ -214,6 +216,7 @@ class SDCompare:
 
     if path_gen==None: 
       path_gen = f'imgs_{self.model}/cache_{self.cache_model}/{self.scheduler_dict["name"]}/{self.inference_steps}'
+      path_gen = os.path.join(self.data_path, path_gen)
     self.path_gen = path_gen
     self.path_gen_FID  = os.path.join(path_gen,  'FID')
     os.makedirs(path_gen, exist_ok=True)
