@@ -42,8 +42,8 @@ class SDCompare:
     self.init_pipe()
     self.init_scheduler()
     self.init_cacher()
-    self.init_COCO_data()
     self.init_CLIP_model()
+    self.init_COCO_data()
     
     self.inference_steps = 15
   
@@ -58,6 +58,8 @@ class SDCompare:
       pipe = StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-1", torch_dtype=torch.float16)
     elif self.model == "SDXL":
       pipe = StableDiffusionXLPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", torch_dtype=torch.float16)
+    else:
+      raise ValueError(f"Unknown model {self.model}")
     self.pipe = pipe.to("cuda")
     self.pipe.set_progress_bar_config(disable=True)
 
@@ -93,6 +95,8 @@ class SDCompare:
         self.pipe = TgateSDLoader(self.pipe).to("cuda")
       elif self.model == "SDXL":
         self.pipe = TgateSDXLLoader(self.pipe).to("cuda")
+      else:
+        raise ValueError(f"Unknown model {self.model}")
     if self.cache_model in ["deepcache", "both"]:
       helper = DeepCacheSDHelper(pipe=self.pipe)
       helper.set_params(
@@ -100,6 +104,8 @@ class SDCompare:
           cache_branch_id=0,
       )
       helper.enable()
+    elif self.cache_model != 'tgate':
+      raise ValueError(f"Unknown cache model {self.cache_model}")
   
   def init_COCO_data(self, N_val=512, N_test=1024, path_coco_imgs=None, path_coco_FID=None):
     '''
