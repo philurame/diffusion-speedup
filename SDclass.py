@@ -278,9 +278,9 @@ class SDCompare:
       img_gen_uncond.save(f"{self.path_gen_FID}/{img_id}.png")
     
     # FID stat
-    fid_params = {'batch_size': 20, 'device': self.device, 'dims': 2048}
+    fid_params = {'batch_size': 16, 'num_workers': 1, 'device': self.device, 'dims': 2048}
     fid_params.update(fid_kwargs)
-    fid_value = fid_score.calculate_fid_given_paths([self.path_coco_FID, path_gen], **fid_params)
+    fid_value = fid_score.calculate_fid_given_paths([self.path_coco_FID, self.path_gen_FID], **fid_params)
 
     if delete_gen_after:
       shutil.rmtree(self.path_gen_FID)
