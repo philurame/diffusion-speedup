@@ -48,7 +48,7 @@ class SDCompare:
     self.init_CLIP_model()
     self.init_COCO_data()
     
-    self.inference_steps = 15
+    self.num_inference_steps = 15
   
   def init_pipe(self, model=None):
     '''
@@ -174,7 +174,7 @@ class SDCompare:
     '''
     call_params = dict(
         prompt = prompt,
-        num_inference_steps = self.inference_steps,
+        num_inference_steps = self.num_inference_steps,
     )
 
     if self.cache_model == "deepcache":
@@ -260,7 +260,7 @@ class SDCompare:
     if delete_gen_after is True, generated images will be deleted after FID calculation
     '''
     if path_gen==None: 
-      path_gen = f'imgs_{self.model}/cache_{self.cache_model}/{self.scheduler_dict["name"]}/{self.inference_steps}'
+      path_gen = f'imgs_{self.model}/cache_{self.cache_model}/{self.scheduler_dict["name"]}/{self.num_inference_steps}'
       path_gen = os.path.join(self.data_path, path_gen)
     self.path_gen = path_gen
     self.path_gen_FID  = os.path.join(path_gen,  'FID')
@@ -295,11 +295,11 @@ class SDCompare:
     self.num_inference_steps = num_inference_steps
 
     Tflops_cond = self.Tflops(prompt="a photograph of an astronaut riding a horse")
-    print(f"Tflops: {Tflops_cond:3}\n")
+    print(f"Tflops: {Tflops_cond:3f}\n")
 
     clip_mean, clip_diff = self.CLIP()
-    print(f"CLIP_mean: {clip_mean:3}, CLIP_diff: {clip_diff:3}\n")
+    print(f"CLIP_mean: {clip_mean:3f}, CLIP_diff: {clip_diff:3f}\n")
 
     if get_fid:
       fid = self.FID()
-      print(f"FID: {fid:3}\n")
+      print(f"FID: {fid:3f}\n")
