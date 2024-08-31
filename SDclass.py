@@ -25,13 +25,14 @@ class SDCompare:
   # =============================================================================
   # Initialization
   # =============================================================================
-  def __init__(self, scheduler_dict, cache_model="deepcache", model='SD', clip_model='ViT-B/32', data_path='img_data'):
+  def __init__(self, scheduler_dict, cache_model="deepcache", model='SD', clip_model='ViT-B/32', data_path='img_data', device=None):
     '''
     Initializes Stable Diffusion pipeline with scheduler and cache model
     cache_model is a string with possible values: "tgate", "deepcache", "both" or None
     scheduler_dict is a dictionary with keys 'scheduler', 'params' and 'name'
     (scheduler_name, cache_model and model are also used for naming generated images folder)
     '''
+    self.device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     self.model = model
     self.cache_model = cache_model
     self.DeepCacheHelper = None
@@ -62,7 +63,7 @@ class SDCompare:
       pipe = StableDiffusionXLPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", torch_dtype=torch.float16)
     else:
       raise ValueError(f"Unknown model {self.model}")
-    self.pipe = pipe.to("cuda")
+    self.pipe = pipe.to(self.device)
     self.pipe.set_progress_bar_config(disable=True)
 
   def init_scheduler(self, scheduler_dict=None):
@@ -82,7 +83,7 @@ class SDCompare:
     self.clip_model = clip_model
 
     self.clip_model,  self.clip_preprocess = clip.load(clip_model)
-    self.clip_model = self.clip_model.to("cuda").eval()
+    self.clip_model = self.clip_model.to(self.device).eval()
       
   def init_cacher(self, cache_model=None):
     '''
@@ -94,9 +95,9 @@ class SDCompare:
 
     if self.cache_model in ["tgate", "both"]:
       if self.model == "SD":
-        self.pipe = TgateSDLoader(self.pipe).to("cuda")
+        self.pipe = TgateSDLoader(self.pipe).to(self.device)
       elif self.model == "SDXL":
-        self.pipe = TgateSDXLLoader(self.pipe).to("cuda")
+        self.pipe = TgateSDXLLoader(self.pipe).to(self.device)
       else:
         raise ValueError(f"Unknown model {self.model}")
     if self.cache_model in ["deepcache", "both"]:
@@ -189,8 +190,8 @@ class SDCompare:
     Returns CLIP score for one image and one caption
     see https://github.com/Taited/clip-score/blob/master/src/clip_score/clip_score.py
     '''
-    image_input = self.clip_preprocess(image).unsqueeze(0).to("cuda")
-    text_input  = clip.tokenize([caption]).to("cuda")
+    image_input = self.clip_preprocess(image).unsqueeze(0).to(self.device)
+    text_input  = clip.tokenize([caption]).to(self.device)
 
     with torch.no_grad():
       image_features = self.clip_model.encode_image(image_input)
@@ -274,7 +275,7 @@ class SDCompare:
       img_gen_uncond.save(f"{self.path_gen_FID}/{img_id}.png")
     
     # FID stat
-    fid_value = fid_score.calculate_fid_given_paths([self.path_coco_FID, path_gen], batch_size=50, device='cuda', dims=2048)
+    fid_value = fid_score.calculate_fid_given_paths([self.path_coco_FID, path_gen], batch_size=50, device=self.device, dims=2048)
 
     if delete_gen_after:
       shutil.rmtree(self.path_gen_FID)
