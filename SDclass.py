@@ -295,11 +295,11 @@ class SDCompare:
     self.num_inference_steps = num_inference_steps
 
     Tflops_cond = self.Tflops(prompt="a photograph of an astronaut riding a horse")
-    print(f"Tflops: {Tflops_cond:3f}\n")
+    print(f"Tflops: {Tflops_cond:.3f}\n")
 
     clip_mean, clip_diff = self.CLIP()
-    print(f"CLIP_mean: {clip_mean:3f}, CLIP_diff: {clip_diff:3f}\n")
+    print(f"CLIP_mean: {clip_mean:.3f}, CLIP_diff: {clip_diff:.3f}\n")
 
     if get_fid:
       fid = self.FID()
-      print(f"FID: {fid:3f}\n")
+      print(f"FID: {fid:.3f}\n")
