@@ -286,3 +286,21 @@ class SDCompare:
       shutil.rmtree(self.path_gen_FID)
 
     return fid_value
+  
+  # =============================================================================
+  # Combined stats
+  # =============================================================================
+  def stats(self, num_inference_steps=None, get_fid=False):
+    steps = steps or self.num_inference_steps
+    self.num_inference_steps = steps
+
+    Tflops_cond = self.Tflops(prompt="a photograph of an astronaut riding a horse")
+    Tflops_uncond = self.Tflops(prompt="")
+    print(f"Tflops_cond: {Tflops_cond:3} Tflops_uncond: {Tflops_uncond:3}\n")
+
+    clip_mean, clip_diff = self.CLIP()
+    print(f"CLIP_mean: {clip_mean:3}, CLIP_diff: {clip_diff:3}\n")
+
+    if get_fid:
+      fid = self.FID()
+      print(f"FID: {fid:3}\n")
