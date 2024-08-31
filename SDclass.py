@@ -156,7 +156,7 @@ class SDCompare:
       if f"{img_id}.png" in already_downloaded:
         continue
       img_coco = Image.open(f"{path_coco_imgs}/{img_id}.png")
-      img_coco = img_coco.resize((299, 299), Image.ANTIALIAS)
+      img_coco = img_coco.resize((299, 299), Image.LANCZOS)
       img_coco.save(f"{path_coco_FID}/{img_id}.png")
 
   
@@ -259,7 +259,7 @@ class SDCompare:
     for n, img_id in enumerate(tqdm(self.img_ids[val_test], desc="FID")):
       torch.manual_seed(n)
       img_gen_uncond = self("")
-      img_gen_uncond = img_gen_uncond.resize((299, 299), Image.ANTIALIAS)
+      img_gen_uncond = img_gen_uncond.resize((299, 299), Image.LANCZOS)
       img_gen_uncond.save(f"{self.path_gen_FID}/{img_id}.png")
     
     # FID stat
