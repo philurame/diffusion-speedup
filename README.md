@@ -4,4 +4,6 @@
 
 # Overview of (superficial) speedup methods for diffusion models 
 - `speedup_diffusions_report.pdf` - Report
-- `graphics.ipynb` - Notebook for generating graphics for the report
+- `extra/graphics.ipynb` - Notebook for generating graphics for the report
+
+- <img src="extra/pigrider.png" alt="isolated" width="500"/>
